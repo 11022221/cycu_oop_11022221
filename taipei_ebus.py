@@ -320,7 +320,7 @@ if __name__ == "__main__":
             [col for col in desired_columns_order if col in final_dataframe.columns]
         ]
 
-        final_dataframe.to_excel(output_excel_path, index=False, encoding='utf-8')
+        final_dataframe.to_excel(output_excel_path, index=False)
         print(f"\n--- 任務完成 ---")
         print(f"✅ 所有公車路線的站點資料已匯出至 Excel 檔案: {output_excel_path}")
         print(f"總共匯出 {len(final_dataframe)} 條站點記錄。")
