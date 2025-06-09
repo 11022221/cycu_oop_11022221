@@ -62,11 +62,13 @@ def main():
             route_info.fetch_route_info()
             df = route_info.parse_route_info()
 
-            if df.empty:
+            # 僅輸出使用者輸入的兩個站名的到站資訊
+            filtered_df = df[df["stop_name"].isin([origin, destination])]
+            if filtered_df.empty:
                 print("❌ 未找到任何到站資訊。")
             else:
                 print("\n以下是該路線的到站資訊：")
-                print(df[["stop_number", "stop_name", "arrival_info"]])
+                print(filtered_df[["stop_number", "stop_name", "arrival_info"]])
         except Exception as e:
             print(f"❌ 查詢過程中發生錯誤：{e}")
 
