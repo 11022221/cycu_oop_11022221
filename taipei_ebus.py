@@ -237,6 +237,37 @@ class taipei_route_info:
         session.commit()
         session.close()
 
+def get_bus_info(start_stop: str, end_stop: str, direction: str):
+    """
+    查詢資料庫，判斷需要搭乘哪一條公車，並抓取該公車的到站資訊。
+    """
+    # 初始化資料庫連線
+    engine = create_engine('sqlite:///data/hermes_ebus_taipei.sqlite3')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # 查詢所有公車路線
+    routes = session.query(bus_route_orm).all()
+    for route in routes:
+        # 查詢該路線的站點資料
+        query = f"""
+        SELECT * FROM data_route_info_busstop
+        WHERE route_id = '{route.route_id}' AND direction = '{direction}'
+        """
+        df = pd.read_sql(query, engine)
+
+        # 檢查開始站和目標站是否在該路線中
+        if start_stop in df["stop_name"].values and end_stop in df["stop_name"].values:
+            start_stop_info = df[df["stop_name"] == start_stop].iloc[0]
+            end_stop_info = df[df["stop_name"] == end_stop].iloc[0]
+
+            print(f"\n需要搭乘的公車：{route.route_name}")
+            print(f"開始站：{start_stop_info['stop_name']}，到站資訊：{start_stop_info['arrival_info']}")
+            print(f"目標站：{end_stop_info['stop_name']}，到站資訊：{end_stop_info['arrival_info']}")
+            return
+
+    print("❌ 未找到符合條件的公車路線。")
+
 # --- 主執行區塊 ---
 if __name__ == "__main__":
     print("--- 開始抓取大台北公車所有路線站點資料 ---")
@@ -330,3 +361,21 @@ if __name__ == "__main__":
 
     # 關閉初始的 route_list_manager，確保資料庫連線關閉
     del route_list_manager
+
+    # 查詢特定公車資訊範例
+    while True:
+        try:
+            start_stop = input("\n請輸入開始站名稱（或直接按 Enter 鍵退出）：").strip()
+            if not start_stop:
+                break # 如果沒有輸入，則退出查詢
+
+            end_stop = input("請輸入目標站名稱：").strip()
+            direction = input("請選擇方向 ('go' 表示去程, 'come' 表示回程)：").strip()
+
+            if direction not in ['go', 'come']:
+                print("❌ 輸入的方向無效，請重新執行程式。")
+            else:
+                get_bus_info(start_stop, end_stop, direction)
+
+        except Exception as e:
+            print(f"查詢發生錯誤: {e}")
